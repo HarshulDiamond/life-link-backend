@@ -31,5 +31,5 @@ const getHello = async (req, res) => {
 
 module.exports = {
   getHello,
-  createUser,
+
 };
