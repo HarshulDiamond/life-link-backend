@@ -9,7 +9,7 @@ app.use(express.json());
 // Mount Routes
 // This base path will be prefixed to all routes in exampleRoutes
 // e.g., /api/hello
-app.use('/api', exampleRoutes);
+app.use('/default/api', exampleRoutes);
 
 // Optional: Add a root route for health checks or basic info
 app.get('/', (req, res) => {

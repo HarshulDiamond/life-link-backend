@@ -8,10 +8,9 @@ const connectDB = require('./src/config/db');
 connectDB();
 
 // Create the handler with a custom base path configuration
-const handler = serverless(app, {
-  // Tell serverless-http what the base path is. It will be stripped from the request path.
-  // We use an environment variable to avoid hardcoding.
-  base: process.env.SERVERLESS_BASE_PATH
+const handler = serverless(app);
+app.use((req, res, next) => {
+  console.log('Incoming Path:', req.path);
+  next();
 });
-
 module.exports.handler = handler;
