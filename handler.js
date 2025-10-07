@@ -1,11 +1,17 @@
+// handler.js
+
 const serverless = require('serverless-http');
 const app = require('./src/app');
-
-// We need to load the environment variables for the lambda function
-// They will be set in the AWS Lambda configuration
 const connectDB = require('./src/config/db');
 
-// Establish the database connection when the Lambda is initialized
+// Establish the database connection
 connectDB();
 
-module.exports.handler = serverless(app);
+// Create the handler with a custom base path configuration
+const handler = serverless(app, {
+  // Tell serverless-http what the base path is. It will be stripped from the request path.
+  // We use an environment variable to avoid hardcoding.
+  base: process.env.SERVERLESS_BASE_PATH
+});
+
+module.exports.handler = handler;
