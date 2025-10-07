@@ -5,7 +5,43 @@ on:
     branches:
       - main
 
+jobs:# .github/workflows/deploy.yml
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use an LTS version of Node.js
+
+      - name: Install dependencies
+        run: npm install --omit=dev # Installs only production dependencies
+
+      - name: Create deployment package
+        run: zip -r function.zip . -x "*.git*" "node_modules/aws-sdk/*" ".github/*" ".env"
+
+      - name: Deploy to AWS Lambda
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1 # Hardcoding region is fine if it's always the same
+        run: |
+          aws lambda update-function-code \
+            --function-name life-link-backend \
+            --zip-file fileb://function.zip \
+            --publish
   deploy:
     runs-on: ubuntu-latest
 

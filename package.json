@@ -1,16 +1,17 @@
 {
   "name": "life-link-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Backend service for Life Link",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0",
-    "serverless-http": "^4.0.0"
+    "express": "^4.19.2",
+    "mongoose": "^8.4.1",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1"
   }
 }
