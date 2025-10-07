@@ -1,22 +1,17 @@
+// user_controller.js
 const User = require('../models/user_model');
 const connectDB = require('../../config/db');
 
-// Connect to DB before processing requests
-connectDB();
-
-/**
- * @desc    Get a hello world message and add a random user
- * @route   GET /api/hello
- */
 const getHello = async (req, res) => {
   try {
-    // Generate random user data
+    // Make sure DB is connected
+    await connectDB();
+
     const randomUser = {
       name: `User${Math.floor(Math.random() * 1000)}`,
       email: `user${Math.floor(Math.random() * 1000)}@example.com`,
     };
 
-    // Create user in DB
     const createdUser = await User.create(randomUser);
 
     res.status(200).json({
@@ -29,7 +24,4 @@ const getHello = async (req, res) => {
   }
 };
 
-module.exports = {
-  getHello,
-
-};
+module.exports = { getHello };
