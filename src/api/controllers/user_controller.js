@@ -5,8 +5,7 @@ const connectDB = require('../../config/db');
 const getHello = async (req, res) => {
   try {
     // Make sure DB is connected
-    await connectDB();
-
+//    await connectDB();
     const randomUser = {
       name: `User${Math.floor(Math.random() * 1000)}`,
       email: `user${Math.floor(Math.random() * 1000)}@example.com`,
