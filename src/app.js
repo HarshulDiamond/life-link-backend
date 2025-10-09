@@ -1,15 +1,16 @@
 const express = require('express');
-const exampleRoutes = require('./api/routes/user_routes');
-
+const userRoutes = require('./api/routes/user_routes');
+const cors = require('cors'); // 1. Import the cors package
 const app = express();
 
+app.use(cors());
 // Middleware
 app.use(express.json());
 
 // Mount Routes
 // This base path will be prefixed to all routes in exampleRoutes
 // e.g., /api/hello
-app.use('/default/api', exampleRoutes);
+app.use('/v1/api/users', userRoutes);
 
 // Optional: Add a root route for health checks or basic info
 app.get('/', (req, res) => {
