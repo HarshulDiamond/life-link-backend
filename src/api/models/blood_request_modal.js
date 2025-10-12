@@ -15,6 +15,18 @@ const BloodRequestSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Patient name is required.'],
   },
+  // --- ADDED PATIENT AGE AND SEX ---
+  patientAge: {
+    type: Number,
+    required: [true, 'Patient age is required.'],
+    min: [0, 'Age cannot be negative.'],
+  },
+  patientSex: {
+    type: String,
+    required: [true, 'Patient sex is required.'],
+    enum: ['Male', 'Female', 'Other'],
+  },
+  // ------------------------------------
   bloodGroup: {
     type: String,
     required: [true, 'Blood group is required.'],
@@ -42,17 +54,15 @@ const BloodRequestSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  // We don't store the file in the DB, just the path to where it's saved on the server.
   doctorPrescriptionUrl: {
     type: String,
-    required: [true, 'A doctor prescription PDF is required.'],
+    required: [true, 'A doctor prescription is required.'],
   },
   status: {
     type: String,
     enum: REQUEST_STATUSES,
     default: 'ACTIVE', // A new request is active by default
   },
-  // Geospatial field, same as in the User model, to find nearby requests
   location: {
     type: {
       type: String,
@@ -65,14 +75,13 @@ const BloodRequestSchema = new mongoose.Schema({
     },
   },
 }, {
-  // Automatically add createdAt and updatedAt timestamps
   timestamps: true
 });
 
-// Create the 2dsphere index for geospatial queries
 BloodRequestSchema.index({ location: '2dsphere' });
 
 module.exports = {
   BloodRequest: mongoose.model('BloodRequest', BloodRequestSchema),
   REQUEST_STATUSES,
 };
+

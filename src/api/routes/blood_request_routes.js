@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { createRequest, upload } = require('../controllers/blood_request_controller');
+const { createRequest,getNearbyRequests ,upload } = require('../controllers/blood_request_controller');
 
 // Apply the upload.single('file') middleware here.
 // The string 'file' MUST match the key you use in Postman's form-data for the file.
 router.post('/request', upload.single('file'), createRequest);
+router.get('/request',  getNearbyRequests);
 
 module.exports = router;
