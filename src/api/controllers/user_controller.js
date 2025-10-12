@@ -37,7 +37,7 @@ const sendOtp = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'OTP sent successfully.',
+            message: 'OTP sent successfully.'+otp,
             // For development/testing purposes, we send the OTP in the response.
             // In production, you would REMOVE this line.
             otp: otp
