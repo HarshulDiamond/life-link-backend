@@ -1,10 +1,11 @@
-const { BloodRequest } = require('../models/blood_request_modal');
+const { BloodRequest,REQUEST_STATUSES } = require('../models/blood_request_modal');
 const { User, BLOOD_GROUPS } = require('../models/user_model');
 const { sendNotificationToUser } = require('./firebase_service.js');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // S3 client configuration
 const s3 = new S3Client({
@@ -115,7 +116,7 @@ const createRequest = async (req, res) => {
 
 // --- CORRECT & EFFICIENT: Function to get nearby requests using MongoDB's Aggregation ---
 // Make sure to import Mongoose at the top of your file
-const mongoose = require('mongoose');
+
 
 const getNearbyRequests = async (req, res) => {
     try {
@@ -225,7 +226,15 @@ const getNearbyRequests = async (req, res) => {
 
         const countResult = await BloodRequest.aggregate(countPipeline);
         const totalRequests = countResult.length > 0 ? countResult[0].totalRequests : 0;
+  const notificationTitle = `Urgent Request: asd`;
+                            const notificationBody = `A patient at asd needs your help.`;
 
+                                await sendNotificationToUser(
+                                    '68e759df9f32964d58931b9f',
+                                    notificationTitle,
+                                    notificationBody,
+                                    { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
+                                );
         res.status(200).json({
             success: true,
             data: {
@@ -237,14 +246,53 @@ const getNearbyRequests = async (req, res) => {
         });
 
 
+
     } catch (error) {
         console.error('Error fetching nearby requests:', error);
         res.status(500).json({ success: false, message: 'An unexpected server error occurred.', error: error.message });
     }
 };
 
+const updateRequestStatus = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { status } = req.body;
+
+        // 1. Validate Input
+        if (!status) {
+            return res.status(400).json({ success: false, message: 'New status is required.' });
+        }
+        if (!REQUEST_STATUSES.includes(status)) {
+            return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${REQUEST_STATUSES.join(', ')}` });
+        }
+        if (!mongoose.Types.ObjectId.isValid(requestId)) {
+            return res.status(400).json({ success: false, message: 'Invalid Request ID format.' });
+        }
+
+        // 2. Find and update the request
+        const request = await BloodRequest.findById(requestId);
+
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Blood request not found.' });
+        }
+
+        request.status = status;
+        const updatedRequest = await request.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Request status updated successfully.',
+            data: updatedRequest
+        });
+
+    } catch (error) {
+        console.error('Error updating request status:', error);
+        res.status(500).json({ success: false, message: 'Server error while updating status.' });
+    }
+};
 module.exports = {
   createRequest,
+  updateRequestStatus,
   getNearbyRequests,
   upload
 };

@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models/user_model');
 const {Otp} = require('../models/otp_modal');
-
+const { BloodRequest } = require('../models/blood_request_modal');
+const mongoose = require('mongoose');
 // --- Helper function to generate JWT ---
 const generateToken = (id) => {
   // Use a secret key from your environment variables.
@@ -170,6 +171,43 @@ const registerUser = async (req, res) => {
     }
 };
 
+const getUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: 'Invalid User ID format.' });
+        }
+
+        // Fetch user details and their requests in parallel for efficiency
+        const [user, requests] = await Promise.all([
+            User.findById(userId).select('-password -tokens'), // Exclude sensitive fields
+
+            // MODIFIED LINE: Use .populate() to include requester details in each request
+            BloodRequest.find({ requester: userId })
+                .sort({ createdAt: -1 })
+                // This populates the 'requester' field and selects only the specified fields.
+                .populate('requester', 'name bloodGroup _id')
+        ]);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                user,
+                requests
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        res.status(500).json({ success: false, message: 'Server error while fetching profile.' });
+    }
+};
+
 // --- 4. Get User Count (Remains the same) ---
 const getUserCount = async (req, res) => {
   try {
@@ -181,7 +219,7 @@ const getUserCount = async (req, res) => {
 };
 
 
-module.exports = { sendOtp, verifyOtp, registerUser, getUserCount,updateFcmToken };
+module.exports = { sendOtp, verifyOtp, registerUser, getUserCount,updateFcmToken ,getUserProfile};
 
 
 
