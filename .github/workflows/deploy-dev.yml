@@ -32,6 +32,6 @@ jobs:
           AWS_REGION: ap-south-1 # Hardcoding region is fine if it's always the same
         run: |
           aws lambda update-function-code \
-            --function-name test \
+            --function-name life-link-backend \
             --zip-file fileb://function.zip \
             --publish
