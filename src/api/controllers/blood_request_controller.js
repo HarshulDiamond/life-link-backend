@@ -99,16 +99,6 @@ const createRequest = async (req, res) => {
       message: 'Blood request created successfully!',
       request: savedRequest
     });
-            const notificationTitle = `Urgent Request: ${bloodGroup}`;
-                    const notificationBody = `A patient at ${hospitalName} needs your help.`;
-
-                        await sendNotificationToUser(
-                            '68e759df9f32964d58931b9f',
-                            notificationTitle,
-                            notificationBody,
-                            { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
-                        );
-
 
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -225,6 +215,15 @@ const getNearbyRequests = async (req, res) => {
                 totalRequests,
             }
         });
+        const notificationTitle = `Urgent Request: ${req.body.bloodGroupNeeded}`;
+                const notificationBody = `A patient at ${req.body.hospitalName} needs your help.`;
+
+                    await sendNotificationToUser(
+                        '68e759df9f32964d58931b9f',
+                        notificationTitle,
+                        notificationBody,
+                        { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
+                    );
 
 
     } catch (error) {
