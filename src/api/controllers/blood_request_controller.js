@@ -3,14 +3,59 @@ const { User, BLOOD_GROUPS } = require('../models/user_model');
 const { sendNotificationToUser } = require('./firebase_service.js');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-const { S3Client } = require('@aws-sdk/client-s3');
+
 const path = require('path');
 const mongoose = require('mongoose');
 
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+// Initialize S3 Client. Ensure your AWS credentials and region are in your environment variables.
+const s3Client = new S3Client({ region: process.env.AWS_REGION });
+
+/**
+ * Generates a pre-signed URL for a private S3 object.
+ */
+const getPrescriptionFile = async (req, res) => {
+    try {
+        // The fileKey is the path to the file in S3 after the bucket name,
+        // e.g., "prescriptions/dev/file-123.jpeg"
+        const { fileKey } = req.params;
+
+        if (!fileKey) {
+            return res.status(400).json({ success: false, message: 'File key is required.' });
+        }
+
+        const bucketName = process.env.S3_BUCKET_NAME; // Your S3 bucket name from .env
+
+        const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey,
+        });
+
+        // Create a URL that is valid for 5 minutes (300 seconds)
+        const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+        // Send the secure URL back to the Flutter client
+        res.status(200).json({
+            success: true,
+            url: presignedUrl
+        });
+
+    } catch (error) {
+        console.error('Error generating pre-signed URL:', error);
+        res.status(500).json({ success: false, message: 'Server error while fetching file URL.' });
+    }
+};
+
+// In your Express router file, you would set up a route like this:
+// router.get('/prescription/:fileKey(*)', getPrescriptionFile);
+// The (*) is important as it allows the fileKey parameter to contain slashes ('/').
 // S3 client configuration
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
 });
+
 
 // Multer configuration for file uploads to S3
 const upload = multer({
@@ -294,6 +339,7 @@ module.exports = {
   createRequest,
   updateRequestStatus,
   getNearbyRequests,
-  upload
+  upload,
+  getPrescriptionFile
 };
 
