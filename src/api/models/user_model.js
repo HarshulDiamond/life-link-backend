@@ -60,6 +60,21 @@ const UserSchema = new mongoose.Schema({
       required: true,
     },
   },
+    tokens: [{
+      platform: {
+        type: String,
+
+        required: true
+      },
+      fcmToken: {
+        type: String,
+        required: true
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
 }, {
   // Automatically add createdAt and updatedAt timestamps
   timestamps: true

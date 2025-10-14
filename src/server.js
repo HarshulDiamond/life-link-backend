@@ -3,6 +3,11 @@ require('dotenv').config(); // Correct
 
 const app = require('./app');
 const connectDB = require('./config/db');
+const {initFirebase} = require('./api/controllers/firebase_service');
+
+
+initFirebase();
+
 
 const PORT = process.env.PORT || 8000;
 

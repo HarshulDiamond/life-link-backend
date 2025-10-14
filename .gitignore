@@ -3,3 +3,4 @@
 /.idea/workspace.xml
 node_modules/
 .env
+src/api/controllers/service-account-key-firebase.json
