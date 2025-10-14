@@ -8,6 +8,7 @@ app.use(cors());
 // Middleware
 app.use(express.json());
 
+
 // Mount Routes
 // This base path will be prefixed to all routes in exampleRoutes
 // e.g., /api/hello

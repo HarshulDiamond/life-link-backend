@@ -1,5 +1,6 @@
 const { BloodRequest } = require('../models/blood_request_modal');
 const { User, BLOOD_GROUPS } = require('../models/user_model');
+const { sendNotificationToUser } = require('./firebase_service.js');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
@@ -98,6 +99,16 @@ const createRequest = async (req, res) => {
       message: 'Blood request created successfully!',
       request: savedRequest
     });
+            const notificationTitle = `Urgent Request: ${bloodGroup}`;
+                    const notificationBody = `A patient at ${hospitalName} needs your help.`;
+
+                        await sendNotificationToUser(
+                            '68e759df9f32964d58931b9f',
+                            notificationTitle,
+                            notificationBody,
+                            { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
+                        );
+
 
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -214,6 +225,7 @@ const getNearbyRequests = async (req, res) => {
                 totalRequests,
             }
         });
+
 
     } catch (error) {
         console.error('Error fetching nearby requests:', error);

@@ -94,6 +94,44 @@ const verifyOtp = async (req, res) => {
     }
 };
 
+//const { protect } = require('../middleware/middleware'); // Assuming you have this middleware
+
+// --- 5. Update/Save FCM Token ---
+const updateFcmToken = async (req, res) => {
+    try {
+        const { fcmToken, platform,userId } = req.body;
+
+
+        if (!fcmToken || !platform) {
+            return res.status(400).json({ success: false, message: 'fcmToken and platform are required.' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        // Check if a token for this platform already exists
+        const tokenIndex = user.tokens.findIndex(token => token.platform === platform);
+
+        if (tokenIndex > -1) {
+            // If token for the platform exists, update it
+            user.tokens[tokenIndex].fcmToken = fcmToken;
+            user.tokens[tokenIndex].addedAt = new Date();
+        } else {
+            // If not, add a new token object to the array
+            user.tokens.push({ fcmToken, platform });
+        }
+
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'FCM token updated successfully.' });
+
+    } catch (error) {
+        console.error('Error updating FCM token:', error);
+        res.status(500).json({ success: false, message: 'Server error while updating token.' });
+    }
+};
 
 // --- 3. Register User (Now with JWT generation) ---
 const registerUser = async (req, res) => {
@@ -145,7 +183,7 @@ const getUserCount = async (req, res) => {
 };
 
 
-module.exports = { sendOtp, verifyOtp, registerUser, getUserCount };
+module.exports = { sendOtp, verifyOtp, registerUser, getUserCount,updateFcmToken };
 
 
 
