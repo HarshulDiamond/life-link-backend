@@ -36,7 +36,6 @@ const sendNotificationToUser = async (userId, title, body, data = {}, image) => 
   try {
     const agent = new https.Agent({ keepAlive: true })
     console.log("🌐 Testing outbound network connectivity...");
-    // ✅ Use a stable open API instead of Google
     const response = await fetch('https://api.ipify.org?format=json',{ agent });
     const result = await response.json();
     console.log(`✅ Internet reachable. Public IP: ${result.ip}`);
@@ -47,8 +46,24 @@ const sendNotificationToUser = async (userId, title, body, data = {}, image) => 
   console.log(`[${startTime.toISOString()}] - INFO: Starting notification process for user ${userId}.`);
 
   try {
-    // For testing, using a hardcoded token.
-    const tokens = ["e6YHmaZ6RM6BSqnN-FPKgm:APA91bELIORGpDQH4I1AQAuanOTQOummXHiK7Xa-HvFTCY3AkyNkSjPvO3hNzc5NxGzQyEq2ZmNBDRKI1vqBAk6Ca1XGfLAiv-0ATnOOrHEAwn1gji_1VOg"];
+    // --- 1. Fetch the user from the database (uncommented) ---
+    const user = await User.findById(userId);
+
+    if (!user) {
+        console.log(`INFO: User with ID ${userId} not found in the database.`);
+        return;
+    }
+
+    if (!user.tokens || user.tokens.length === 0) {
+      console.log(`INFO: User ${userId} has no FCM tokens registered.`);
+      return;
+    }
+
+    // --- 2. Extract the actual token strings from the user's token objects ---
+    // The user.tokens array contains objects like { fcmToken: '...', platform: '...' }
+    // We need to map this to an array of strings: ['token1', 'token2', ...]
+    const tokens = user.tokens.map(tokenObj => tokenObj.fcmToken);
+
     if (tokens.length === 0) {
       console.log(`INFO: No valid tokens found for user ${userId}.`);
       return;
@@ -58,16 +73,14 @@ const sendNotificationToUser = async (userId, title, body, data = {}, image) => 
         notification: {
             title,
             body,
-            // Use 'imageUrl' for better compatibility across platforms
             ...(image && { imageUrl: image }),
         },
         data: data || {},
     };
 
-    const tokenChunks = chunkArray(tokens, 500); // FCM batch limit is 500
+    const tokenChunks = chunkArray(tokens, 500);
     console.log(`DEBUG: Sending to ${tokens.length} tokens in ${tokenChunks.length} batch(es).`);
 
-    // **CRITICAL FIX**: Use Promise.all to send all batches and wait for all to complete.
     const responses = await Promise.all(
       tokenChunks.map(batch =>
         admin.messaging().sendEachForMulticast({ tokens: batch, ...payload })
@@ -77,7 +90,6 @@ const sendNotificationToUser = async (userId, title, body, data = {}, image) => 
     let successCount = 0;
     let failureCount = 0;
 
-    // Aggregate results from all batches
     responses.forEach(batchResponse => {
         successCount += batchResponse.successCount;
         failureCount += batchResponse.failureCount;
@@ -88,7 +100,6 @@ const sendNotificationToUser = async (userId, title, body, data = {}, image) => 
     console.log(`[${endTime.toISOString()}] - SUCCESS: Processed in ${duration.toFixed(2)}s. Sent: ${successCount}, Failed: ${failureCount}`);
 
   } catch (err) {
-    // This will catch errors from initialization or sending.
     console.error(`[${new Date().toISOString()}] - FATAL: FCM send error for user ${userId}`, err);
   }
 }
