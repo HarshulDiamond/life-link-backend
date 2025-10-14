@@ -100,6 +100,8 @@ const createRequest = async (req, res) => {
       request: savedRequest
     });
 
+
+
   } catch (error) {
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
@@ -215,15 +217,15 @@ const getNearbyRequests = async (req, res) => {
                 totalRequests,
             }
         });
-        const notificationTitle = `Urgent Request: ${req.body.bloodGroupNeeded}`;
-                const notificationBody = `A patient at ${req.body.hospitalName} needs your help.`;
+            const notificationTitle = `Urgent Request: asd`;
+                            const notificationBody = `A patient at asd needs your help.`;
 
-                    await sendNotificationToUser(
-                        '68e759df9f32964d58931b9f',
-                        notificationTitle,
-                        notificationBody,
-                        { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
-                    );
+                                await sendNotificationToUser(
+                                    '68e759df9f32964d58931b9f',
+                                    notificationTitle,
+                                    notificationBody,
+                                    { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
+                                );
 
 
     } catch (error) {

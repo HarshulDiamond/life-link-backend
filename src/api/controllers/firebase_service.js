@@ -18,6 +18,7 @@ if (!admin.apps.length) {
 const sendNotificationToUser = async (userId, title, body, data = {}) => {
   try {
     const user = await User.findById(userId);
+    console.log("aagya")
 
     if (!user || !user.tokens || user.tokens.length === 0) {
       console.log(`User ${userId} not found or has no FCM tokens.`);
@@ -32,7 +33,9 @@ const sendNotificationToUser = async (userId, title, body, data = {}) => {
       data,
     };
 
+
     const response = await admin.messaging().sendEachForMulticast(message);
+
 
     console.log('✅ Successfully sent message:', response);
 
