@@ -243,6 +243,7 @@ const getNearbyRequests = async (req, res) => {
                     requester: {
                         _id: "$requesterInfo._id",
                         name: "$requesterInfo.name",
+                        phoneNumber: "$requesterInfo.number",
                         bloodGroup: "$requesterInfo.bloodGroup",
                     }
                 }
