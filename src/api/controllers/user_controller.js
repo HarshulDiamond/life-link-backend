@@ -99,9 +99,9 @@ const verifyOtp = async (req, res) => {
 // --- 5. Update/Save FCM Token ---
 const updateFcmToken = async (req, res) => {
     try {
-        const { fcmToken, platform,userId } = req.body;
+        const { fcmToken, platform, userId } = req.body;
 
-
+        // 1. Validate input
         if (!fcmToken || !platform) {
             return res.status(400).json({ success: false, message: 'fcmToken and platform are required.' });
         }
@@ -111,21 +111,19 @@ const updateFcmToken = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found.' });
         }
 
-        // Check if a token for this platform already exists
-        const tokenIndex = user.tokens.findIndex(token => token.platform === platform);
+        // 2. Check if the exact FCM token already exists in the array
+        const tokenExists = user.tokens.some(token => token.fcmToken === fcmToken);
 
-        if (tokenIndex > -1) {
-            // If token for the platform exists, update it
-            user.tokens[tokenIndex].fcmToken = fcmToken;
-            user.tokens[tokenIndex].addedAt = new Date();
-        } else {
-            // If not, add a new token object to the array
-            user.tokens.push({ fcmToken, platform });
+        if (tokenExists) {
+            // If the token is already present, do nothing and confirm it's registered.
+            return res.status(200).json({ success: true, message: 'FCM token is already registered.' });
         }
 
+        // 3. If the token is new, add it to the array
+        user.tokens.push({ fcmToken, platform, addedAt: new Date() });
         await user.save();
 
-        res.status(200).json({ success: true, message: 'FCM token updated successfully.' });
+        res.status(200).json({ success: true, message: 'FCM token added successfully.' });
 
     } catch (error) {
         console.error('Error updating FCM token:', error);

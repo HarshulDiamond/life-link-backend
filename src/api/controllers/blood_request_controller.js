@@ -114,9 +114,13 @@ const createRequest = async (req, res) => {
 
 
 // --- CORRECT & EFFICIENT: Function to get nearby requests using MongoDB's Aggregation ---
+// Make sure to import Mongoose at the top of your file
+const mongoose = require('mongoose');
+
 const getNearbyRequests = async (req, res) => {
     try {
-        const { longitude, latitude, page = 1, limit = 10 } = req.query;
+        // 1. Destructure userId from the query parameters.
+        const { longitude, latitude, userId, page = 1, limit = 10 } = req.query;
 
         if (!longitude || !latitude) {
             return res.status(400).json({ success: false, message: 'Longitude and latitude are required.' });
@@ -129,23 +133,39 @@ const getNearbyRequests = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid longitude or latitude values.' });
         }
 
+        // --- MODIFICATION START ---
+
+        // Create the base query object for the $geoNear stage.
+        // This makes it easy to add more filters conditionally.
+        const geoNearQuery = { status: 'ACTIVE' };
+
+        // If a userId is provided, add a condition to exclude their own requests.
+        if (userId) {
+            // Good practice: Validate the provided userId to prevent errors.
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({ success: false, message: 'Invalid userId format.' });
+            }
+            // Use the $ne (not equal) operator to filter out documents
+            // where the 'requester' field matches the current user's ID.
+            geoNearQuery.requester = { $ne: new mongoose.Types.ObjectId(userId) };
+        }
+
+        // --- MODIFICATION END ---
+
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
         const skip = (pageNum - 1) * limitNum;
 
-        // This is the powerful MongoDB Aggregation Pipeline for geospatial queries.
         const aggregationPipeline = [
-            // Stage 1: $geoNear MUST be the first stage. It uses the 2dsphere index to
-            // efficiently find documents, sort them by distance, and add a 'distance' field.
             {
                 $geoNear: {
                     near: { type: "Point", coordinates: [long, lat] },
-                    distanceField: "distance", // This field will contain the distance in meters.
+                    distanceField: "distance",
                     spherical: true,
-                    query: { status: 'ACTIVE' } // Filter for active requests at the earliest stage.
+                    // 2. Use the dynamically built query object here.
+                    query: geoNearQuery
                 }
             },
-            // Stage 2: Join with the 'users' collection to get requester details.
             {
                 $lookup: {
                     from: "users",
@@ -154,14 +174,12 @@ const getNearbyRequests = async (req, res) => {
                     as: "requesterInfo"
                 }
             },
-            // Stage 3: Deconstruct the array created by $lookup.
             {
                 $unwind: {
                     path: "$requesterInfo",
                     preserveNullAndEmptyArrays: true
                 }
             },
-            // Stage 4: Reshape the output to be clean and exactly what the frontend needs.
             {
                 $project: {
                     _id: 1,
@@ -175,7 +193,7 @@ const getNearbyRequests = async (req, res) => {
                     createdAt: 1,
                     location: 1,
                     doctorPrescriptionUrl: 1,
-                    distance: 1, // Include the distance calculated by $geoNear.
+                    distance: 1,
                     requester: {
                         _id: "$requesterInfo._id",
                         name: "$requesterInfo.name",
@@ -183,21 +201,21 @@ const getNearbyRequests = async (req, res) => {
                     }
                 }
             },
-            // Stage 5 & 6: Apply pagination at the end.
             { $skip: skip },
             { $limit: limitNum }
         ];
 
         const requests = await BloodRequest.aggregate(aggregationPipeline);
 
-        // --- FIX: Use an aggregation pipeline to get the total count correctly ---
+        // Also apply the same filter to the count pipeline for accurate pagination.
         const countPipeline = [
             {
                 $geoNear: {
                     near: { type: "Point", coordinates: [long, lat] },
                     distanceField: "distance",
                     spherical: true,
-                    query: { status: 'ACTIVE' }
+                    // 3. Use the same query object for the count.
+                    query: geoNearQuery
                 }
             },
             {
@@ -217,15 +235,6 @@ const getNearbyRequests = async (req, res) => {
                 totalRequests,
             }
         });
-            const notificationTitle = `Urgent Request: asd`;
-                            const notificationBody = `A patient at asd needs your help.`;
-
-                                await sendNotificationToUser(
-                                    '68e759df9f32964d58931b9f',
-                                    notificationTitle,
-                                    notificationBody,
-                                    { requestId: '68eb54339346e17811335e4a'} // Send request ID in data
-                                );
 
 
     } catch (error) {
