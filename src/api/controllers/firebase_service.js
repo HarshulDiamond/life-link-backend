@@ -1,6 +1,6 @@
 const admin = require('firebase-admin');
 const https = require('https');
-
+const { User, BLOOD_GROUPS } = require('../models/user_model');
 let isInitialized = false
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
